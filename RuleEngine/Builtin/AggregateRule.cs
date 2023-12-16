@@ -28,8 +28,8 @@ public sealed record AggregateRule<TParams>(params IRuleNode<TParams>[] Rules)
 		Expression? aggregateExpression = Rules.Aggregate(
 			null as Expression,
 			(aggregate, rule) => aggregate is null
-				? ParameterReplacer<TParams>.Replace(rule.ToExpression())
-				: Expression.AndAlso(aggregate, ParameterReplacer<TParams>.Replace(rule.ToExpression()))
+				? ParameterReplacer<TParams>.Replace(rule.ToExpression().Body)
+				: Expression.AndAlso(aggregate, ParameterReplacer<TParams>.Replace(rule.ToExpression().Body))
 			);
 
 		return Expression.Lambda<Func<TParams, bool>>(

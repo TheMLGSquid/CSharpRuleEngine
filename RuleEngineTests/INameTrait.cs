@@ -2,7 +2,6 @@
 
 namespace RuleEngineTests
 {
-	[GenerateRules]
 	public interface INameTrait
 	{
 		string Name { get; init; }

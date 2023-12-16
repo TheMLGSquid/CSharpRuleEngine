@@ -8,3 +8,9 @@ public interface IRuleNode<TParams>
 	Expression<Func<TParams, bool>> ToExpression();
 	string Describe();
 }
+
+public static class RuleExtensions
+{
+	public static Func<TParams, bool> ToFunc<TParams>(this IRuleNode<TParams> rule)
+		=> rule.ToExpression().Compile();
+}
