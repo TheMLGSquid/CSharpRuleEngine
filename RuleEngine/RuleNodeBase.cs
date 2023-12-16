@@ -25,6 +25,11 @@ public abstract record RuleNodeBase<TParams> : IRuleNode<TParams>
 	}
 	public static NotRule<TParams> operator !(RuleNodeBase<TParams> a) => new NotRule<TParams>(a);
 
+	protected static Expression<Func<TParams, bool>> FixParams(Expression<Func<TParams, bool>> expression)
+	{
+		return ParameterReplacer<TParams>.Replace(expression);
+	}
+
 	public abstract string Describe();
 	public abstract bool Evaluate(in TParams parameters);
 	public abstract Expression<Func<TParams, bool>> ToExpression();
