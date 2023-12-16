@@ -3,11 +3,9 @@ using System.Linq.Expressions;
 
 namespace RuleEngine.Builtin;
 
-public sealed record AggregateRule<TParams>(ImmutableArray<IRuleNode<TParams>> Rules)
+public sealed record AggregateRule<TParams>(params IRuleNode<TParams>[] Rules)
 	: RuleNodeBase<TParams>
 {
-	public AggregateRule(params IRuleNode<TParams>[] rules)
-		: this(rules.ToImmutableArray()) { }
 	public override string Describe()
 	{
 		return "All["
