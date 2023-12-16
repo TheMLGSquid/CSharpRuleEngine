@@ -8,12 +8,9 @@ using System.Threading.Tasks;
 
 namespace RuleEngine.Builtin;
 
-public sealed record OneOfRule<TParams>(ImmutableArray<IRuleNode<TParams>> Rules)
+public sealed record OneOfRule<TParams>(params IRuleNode<TParams>[] Rules)
 	: RuleNodeBase<TParams>
 {
-	public OneOfRule(params IRuleNode<TParams>[] rules)
-		: this(rules.ToImmutableArray()) { }
-
 	public override string Describe()
 	{
 		return "Any["

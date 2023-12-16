@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 
 namespace RuleEngine;
-
 public abstract record RuleNodeBase<TParams> : IRuleNode<TParams>
 {
 	public static OneOfRule<TParams> operator | (RuleNodeBase<TParams> a, RuleNodeBase<TParams> b)
