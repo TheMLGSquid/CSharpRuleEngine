@@ -3,35 +3,26 @@ using Xunit.Sdk;
 
 namespace RuleEngineTests;
 
-[GenerateRules]
-public class PersonParameters
-{
-	public string Name { get; set; }
-}
+public record Person(string Name) : INameTrait;
 
 public class UnitTest1
 {
+	public static readonly NameEqualsRule Rule = new("Tal");
+	public static readonly Func<INameTrait, bool> CompiledRule = Rule.ToExpression().Compile();
 	[Fact]
 	public void TestNonCompiled()
 	{
-		var rule = new NameEqualsRule("Tal");
-		var personParameters = new PersonParameters
-		{
-			Name = "Tal"
-		};
+		var personParameters = new Person("Tal");
 
-		Assert.True(rule.Evaluate(personParameters));
+		Assert.True(Rule.Evaluate(personParameters));
+		Assert.False(Rule.Evaluate(personParameters with { Name = "Blah" }));
 	}
 	[Fact]
 	public void TestCompiled()
 	{
-		var rule = new NameEqualsRule("Tal").ToExpression().Compile();
-		var personParameters = new PersonParameters
-		{
-			Name = "Tal"
-		};
+		var personParameters = new Person("Tal");
 
-		Assert.True(rule(personParameters));
+		Assert.True(CompiledRule(personParameters));
+		Assert.False(CompiledRule(personParameters with { Name = "Blah" }));
 	}
-
 }

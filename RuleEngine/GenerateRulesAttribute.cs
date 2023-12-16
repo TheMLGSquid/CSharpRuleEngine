@@ -1,4 +1,4 @@
 ﻿namespace RuleEngine;
 
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class)]
 public sealed class GenerateRulesAttribute : Attribute { }

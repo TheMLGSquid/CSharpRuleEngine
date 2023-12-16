@@ -22,24 +22,28 @@ namespace RuleEngine.SourceGeneration
 			{
 				var semanticModel = compilation.GetSemanticModel(syntaxTree);
 				var classNodes = syntaxTree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>();
+				var interfaceNodes = syntaxTree.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>();
 
-				foreach (var classNode in classNodes)
+				var symbols = classNodes.Select(node => (false, semanticModel.GetDeclaredSymbol(node)))
+					.Concat(interfaceNodes.Select(node => (true, semanticModel.GetDeclaredSymbol(node))));
+
+				foreach (var (isInterface, symbol) in symbols)
 				{
-					var classSymbol = semanticModel.GetDeclaredSymbol(classNode);
-					var classAttributes = classSymbol.GetAttributes();
+					var classAttributes = symbol.GetAttributes();
 
 					bool hasGenerateRulesAttribute = classAttributes
 						.Any(ad => ad.AttributeClass.Name.Contains("GenerateRules"));
 					if (hasGenerateRulesAttribute)
 					{
-						var generatedCode = GenerateCodeForClass(classSymbol);
-						context.AddSource($"{classSymbol.Name}_generated.cs", SourceText.From(generatedCode, Encoding.UTF8));
+						var generatedCode = GenerateCodeForClass(symbol, isInterface);
+						context.AddSource($"{symbol.Name}_generated.cs", SourceText.From(generatedCode, Encoding.UTF8));
 					}
 				}
+
 			}
 		}
 
-		public static string GenerateCodeForClass(INamedTypeSymbol classSymbol)
+		public static string GenerateCodeForClass(INamedTypeSymbol classSymbol, bool isInterface)
 		{
 			var stringBuilder = new StringBuilder();
 			stringBuilder.AppendLine("using System;");
@@ -50,9 +54,9 @@ namespace RuleEngine.SourceGeneration
 
 			foreach (var member in classSymbol.GetMembers())
 			{
-				if (member is IPropertySymbol propertySymbol && propertySymbol.DeclaredAccessibility == Accessibility.Public)
+				if (member is IPropertySymbol propertySymbol)
 				{
-					stringBuilder.AppendLine(GenerateEqualsRuleClassForProperty(classSymbol, propertySymbol));
+					stringBuilder.AppendLine(GenerateEqualsRuleClassForProperty(classSymbol, propertySymbol, isInterface));
 				}
 			}
 
@@ -61,20 +65,21 @@ namespace RuleEngine.SourceGeneration
 			return stringBuilder.ToString();
 		}
 
-		private static string GenerateEqualsRuleClassForProperty(INamedTypeSymbol classSymbol, IPropertySymbol propertySymbol)
+		private static string GenerateEqualsRuleClassForProperty(INamedTypeSymbol classSymbol, IPropertySymbol propertySymbol, bool isInterface)
 		{
 			string paramsType = classSymbol.Name;
 			var stringBuilder = new StringBuilder();
 
 			stringBuilder.AppendLine($"	public sealed record {propertySymbol.Name}EqualsRule({propertySymbol.Type.Name} EqualsValue)");
 			stringBuilder.AppendLine($"		: RuleNodeBase<{paramsType}>");
+
 			stringBuilder.AppendLine("	{");
 			stringBuilder.AppendLine("		public override string Describe()");
 			stringBuilder.AppendLine($"			=> $\"{propertySymbol.Name} == {{EqualsValue}}\";");
 			stringBuilder.AppendLine("");
 			stringBuilder.AppendLine($"		public override bool Evaluate(in {paramsType} parameters)");
 			stringBuilder.AppendLine("		{");
-			stringBuilder.AppendLine("			return parameters.Equals(EqualsValue);");
+			stringBuilder.AppendLine($"			return parameters.{propertySymbol.Name}.Equals(EqualsValue);");
 			stringBuilder.AppendLine("		}");
 			stringBuilder.AppendLine("");
 			stringBuilder.AppendLine($"		public override Expression<Func<{paramsType}, bool>> ToExpression()");
@@ -88,7 +93,7 @@ namespace RuleEngine.SourceGeneration
 
 		public void Initialize(GeneratorInitializationContext context)
 		{
-						// System.Diagnostics.Debugger.Launch();
+						  //System.Diagnostics.Debugger.Launch();
 		}
 	}
 }
